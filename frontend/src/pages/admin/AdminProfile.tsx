@@ -22,7 +22,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { toast } from 'react-hot-toast'
 import ProfileImage from '../../components/profile/ProfileImage'
 import PasswordChange from '../../components/profile/PasswordChange'
-import WalletConnection from '../../components/profile/WalletConnection'
+import { WalletConnection } from '../../components/profile/WalletConnection'
 import AccountSettings from '../../components/profile/AccountSettings'
 
 interface AdminStats {
@@ -33,6 +33,14 @@ interface AdminStats {
   totalUsers: number
   totalLoanAmount: number
   systemHealth: 'good' | 'warning' | 'critical'
+}
+
+interface Address {
+  street: string
+  city: string
+  state: string
+  zipCode: string
+  country: string
 }
 
 interface SystemSettings {
@@ -63,6 +71,39 @@ const AdminProfile = () => {
   const [editedUser, setEditedUser] = useState(user)
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null)
   const [activeTab, setActiveTab] = useState<'basic' | 'password' | 'wallet' | 'settings' | 'system'>('basic')
+
+  // Helper function to get address object
+  const getAddressObject = (address: any): Address => {
+    if (typeof address === 'object' && address !== null) {
+      return {
+        street: address.street || '',
+        city: address.city || '',
+        state: address.state || '',
+        zipCode: address.zipCode || '',
+        country: address.country || ''
+      }
+    }
+    return {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: ''
+    }
+  }
+
+  // Helper function to update address
+  const updateAddress = (field: keyof Address, value: string) => {
+    if (!editedUser) return
+    const currentAddress = getAddressObject(editedUser.address)
+    setEditedUser({
+      ...editedUser,
+      address: {
+        ...currentAddress,
+        [field]: value
+      }
+    })
+  }
 
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     interestRates: {
@@ -241,50 +282,6 @@ const AdminProfile = () => {
     } else {
       const error = await response.json()
       throw new Error(error.message || 'Failed to update password')
-    }
-  }
-
-  const handleWalletConnect = async (address: string) => {
-    try {
-      const response = await fetch('http://localhost:5001/api/user/connect-wallet', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ walletAddress: address })
-      })
-
-      if (response.ok) {
-        const updatedUser = await response.json()
-        updateUser(updatedUser)
-      } else {
-        throw new Error('Failed to connect wallet')
-      }
-    } catch (error) {
-      console.error('Error connecting wallet:', error)
-      throw error
-    }
-  }
-
-  const handleWalletDisconnect = async () => {
-    try {
-      const response = await fetch('http://localhost:5001/api/user/disconnect-wallet', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-
-      if (response.ok) {
-        const updatedUser = await response.json()
-        updateUser(updatedUser)
-      } else {
-        throw new Error('Failed to disconnect wallet')
-      }
-    } catch (error) {
-      console.error('Error disconnecting wallet:', error)
-      throw error
     }
   }
 
@@ -619,11 +616,8 @@ const AdminProfile = () => {
                           <input
                             type="text"
                             placeholder="Street Address"
-                            value={editedUser.address?.street || ''}
-                            onChange={(e) => setEditedUser({
-                              ...editedUser,
-                              address: { ...editedUser.address, street: e.target.value } as any
-                            })}
+                            value={getAddressObject(editedUser.address).street}
+                            onChange={(e) => updateAddress('street', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -631,11 +625,8 @@ const AdminProfile = () => {
                           <input
                             type="text"
                             placeholder="City"
-                            value={editedUser.address?.city || ''}
-                            onChange={(e) => setEditedUser({
-                              ...editedUser,
-                              address: { ...editedUser.address, city: e.target.value } as any
-                            })}
+                            value={getAddressObject(editedUser.address).city}
+                            onChange={(e) => updateAddress('city', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -643,11 +634,8 @@ const AdminProfile = () => {
                           <input
                             type="text"
                             placeholder="State"
-                            value={editedUser.address?.state || ''}
-                            onChange={(e) => setEditedUser({
-                              ...editedUser,
-                              address: { ...editedUser.address, state: e.target.value } as any
-                            })}
+                            value={getAddressObject(editedUser.address).state}
+                            onChange={(e) => updateAddress('state', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -655,11 +643,8 @@ const AdminProfile = () => {
                           <input
                             type="text"
                             placeholder="ZIP Code"
-                            value={editedUser.address?.zipCode || ''}
-                            onChange={(e) => setEditedUser({
-                              ...editedUser,
-                              address: { ...editedUser.address, zipCode: e.target.value } as any
-                            })}
+                            value={getAddressObject(editedUser.address).zipCode}
+                            onChange={(e) => updateAddress('zipCode', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -667,11 +652,8 @@ const AdminProfile = () => {
                           <input
                             type="text"
                             placeholder="Country"
-                            value={editedUser.address?.country || ''}
-                            onChange={(e) => setEditedUser({
-                              ...editedUser,
-                              address: { ...editedUser.address, country: e.target.value } as any
-                            })}
+                            value={getAddressObject(editedUser.address).country}
+                            onChange={(e) => updateAddress('country', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -680,9 +662,16 @@ const AdminProfile = () => {
                       <div className="text-gray-900">
                         {user.address ? (
                           <div>
-                            <p>{user.address.street}</p>
-                            <p>{user.address.city}, {user.address.state} {user.address.zipCode}</p>
-                            <p>{user.address.country}</p>
+                            {(() => {
+                              const addr = getAddressObject(user.address)
+                              return (
+                                <>
+                                  <p>{addr.street}</p>
+                                  <p>{addr.city}, {addr.state} {addr.zipCode}</p>
+                                  <p>{addr.country}</p>
+                                </>
+                              )
+                            })()}
                           </div>
                         ) : (
                           <p className="text-gray-500">No address provided</p>
@@ -698,11 +687,7 @@ const AdminProfile = () => {
               )}
 
               {activeTab === 'wallet' && (
-                <WalletConnection
-                  currentWalletAddress={user.walletAddress}
-                  onWalletConnect={handleWalletConnect}
-                  onWalletDisconnect={handleWalletDisconnect}
-                />
+                <WalletConnection />
               )}
 
               {activeTab === 'settings' && (
