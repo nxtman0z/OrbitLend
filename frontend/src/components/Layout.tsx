@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import ThemeToggle from './ThemeToggle'
 import { 
   Menu, 
   X, 
@@ -56,9 +57,14 @@ const Layout = ({ children }: LayoutProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen transition-colors duration-300" style={{ 
+      background: `rgb(var(--bg-secondary))`,
+      color: `rgb(var(--text-primary))`
+    }}>
       {/* Navigation */}
-      <nav className="bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-50">
+      <nav className="glass-premium sticky top-0 z-50 border-b" style={{
+        borderColor: `rgb(var(--border-primary))`
+      }}>
         <div className="container-responsive">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
@@ -86,13 +92,11 @@ const Layout = ({ children }: LayoutProps) => {
                     <Link
                       key={item.href}
                       to={item.href}
-                      className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 group ${
-                        isActiveRoute(item.href)
-                          ? 'bg-primary-100 text-primary-700 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      className={`nav-item-premium ${
+                        isActiveRoute(item.href) ? 'active' : ''
                       }`}
                     >
-                      <Icon className={`w-4 h-4 ${isActiveRoute(item.href) ? 'text-primary-600' : 'group-hover:text-gray-700'}`} />
+                      <Icon className="w-4 h-4" />
                       <span>{item.name}</span>
                     </Link>
                   )
@@ -102,36 +106,60 @@ const Layout = ({ children }: LayoutProps) => {
 
             {/* Right side */}
             <div className="flex items-center space-x-4">
+              {/* Theme Toggle */}
+              <ThemeToggle />
+              
               {isAuthenticated ? (
                 <>
                   {/* User menu */}
                   <div className="hidden md:flex items-center space-x-4">
-                    <div className="flex items-center space-x-3 bg-gray-50 rounded-xl px-4 py-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white text-sm font-semibold">
-                          {user?.firstName?.charAt(0)}
-                        </span>
+                    <div className="flex items-center space-x-3 glass-card px-4 py-2">
+                      <div className="relative">
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                          <span className="text-white text-sm font-semibold">
+                            {user?.firstName?.charAt(0)}
+                          </span>
+                        </div>
+                        {user?.isWalletUser && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full ring-2 ring-white"></div>
+                        )}
                       </div>
                       <div className="text-sm">
-                        <div className="font-medium text-gray-900">Welcome, {user?.firstName}</div>
-                        {user?.role === 'admin' && (
-                          <span className="bg-gradient-to-r from-primary-500 to-purple-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                            Admin
-                          </span>
-                        )}
+                        <div className="font-medium" style={{ color: `rgb(var(--text-primary))` }}>
+                          Welcome, {user?.firstName}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {user?.role === 'admin' && (
+                            <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                              Admin
+                            </span>
+                          )}
+                          {user?.isWalletUser && (
+                            <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                              Wallet
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <Link
                       to="/profile"
-                      className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300"
+                      className="p-2.5 rounded-lg transition-all duration-300 hover:scale-110"
+                      style={{ 
+                        color: `rgb(var(--text-muted))`,
+                        background: `rgb(var(--bg-card))`,
+                        border: `1px solid rgb(var(--border-primary))`
+                      }}
                     >
                       <User className="w-5 h-5" />
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                      className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg"
+                      title="Logout"
                     >
-                      <LogOut className="w-5 h-5" />
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
                     </button>
                   </div>
 
@@ -139,7 +167,12 @@ const Layout = ({ children }: LayoutProps) => {
                   <div className="md:hidden">
                     <button
                       onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                      className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300"
+                      className="p-2.5 rounded-lg transition-all duration-300"
+                      style={{ 
+                        color: `rgb(var(--text-muted))`,
+                        background: `rgb(var(--bg-card))`,
+                        border: `1px solid rgb(var(--border-primary))`
+                      }}
                     >
                       {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
@@ -149,13 +182,13 @@ const Layout = ({ children }: LayoutProps) => {
                 <div className="flex items-center space-x-3">
                   <Link
                     to="/login"
-                    className="text-gray-600 hover:text-gray-900 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-gray-100"
+                    className="btn-secondary-premium"
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
-                    className="bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+                    className="btn-premium"
                   >
                     Sign Up Free
                   </Link>
@@ -167,7 +200,9 @@ const Layout = ({ children }: LayoutProps) => {
 
         {/* Mobile menu */}
         {isAuthenticated && isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md">
+          <div className="md:hidden glass-premium border-t" style={{
+            borderColor: `rgb(var(--border-primary))`
+          }}>
             <div className="px-4 pt-4 pb-6 space-y-2">
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -176,10 +211,8 @@ const Layout = ({ children }: LayoutProps) => {
                     key={item.href}
                     to={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 ${
-                      isActiveRoute(item.href)
-                        ? 'bg-primary-100 text-primary-700 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    className={`nav-item-premium ${
+                      isActiveRoute(item.href) ? 'active' : ''
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -188,27 +221,43 @@ const Layout = ({ children }: LayoutProps) => {
                 )
               })}
               
-              <div className="border-t border-gray-200 pt-4 mt-4 space-y-2">
-                <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-xl">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm font-semibold">
-                      {user?.firstName?.charAt(0)}
-                    </span>
+              <div className="border-t pt-4 mt-4 space-y-2" style={{
+                borderColor: `rgb(var(--border-primary))`
+              }}>
+                <div className="flex items-center space-x-3 glass-card px-4 py-3">
+                  <div className="relative">
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-semibold">
+                        {user?.firstName?.charAt(0)}
+                      </span>
+                    </div>
+                    {user?.isWalletUser && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full ring-2 ring-white"></div>
+                    )}
                   </div>
                   <div className="text-sm">
-                    <div className="font-medium text-gray-900">{user?.firstName}</div>
-                    {user?.role === 'admin' && (
-                      <span className="bg-gradient-to-r from-primary-500 to-purple-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                        Admin
-                      </span>
-                    )}
+                    <div className="font-medium" style={{ color: `rgb(var(--text-primary))` }}>
+                      {user?.firstName}
+                    </div>
+                    <div className="flex items-center space-x-2 mt-1">
+                      {user?.role === 'admin' && (
+                        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                          Admin
+                        </span>
+                      )}
+                      {user?.isWalletUser && (
+                        <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                          Wallet Connected
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
                 <Link
                   to="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-300"
+                  className="nav-item-premium"
                 >
                   <User className="w-5 h-5" />
                   <span>Profile</span>
@@ -218,10 +267,17 @@ const Layout = ({ children }: LayoutProps) => {
                     setIsMobileMenuOpen(false)
                     handleLogout()
                   }}
-                  className="flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 w-full text-left transition-all duration-300"
+                  className="nav-item-premium w-full text-left text-red-600 hover:text-red-700 hover:bg-red-100 border-2 border-red-300 bg-red-50 rounded-xl p-4 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
                 >
-                  <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <LogOut className="w-5 h-5" />
+                      <span>Sign Out</span>
+                    </div>
+                    <div className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                      Logout
+                    </div>
+                  </div>
                 </button>
               </div>
             </div>
@@ -235,7 +291,11 @@ const Layout = ({ children }: LayoutProps) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white">
+      <footer style={{ 
+        background: `rgb(var(--bg-card))`,
+        color: `rgb(var(--text-primary))`,
+        borderTop: `1px solid rgb(var(--border-primary))`
+      }}>
         <div className="container-responsive py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
@@ -247,10 +307,12 @@ const Layout = ({ children }: LayoutProps) => {
                 />
                 <div>
                   <span className="text-2xl font-bold">OrbitLend</span>
-                  <div className="text-sm text-gray-400">DeFi Lending Platform</div>
+                  <div className="text-sm" style={{ color: `rgb(var(--text-muted))` }}>
+                    DeFi Lending Platform
+                  </div>
                 </div>
               </div>
-              <p className="text-gray-300 mb-6 leading-relaxed max-w-md">
+              <p className="mb-6 leading-relaxed max-w-md" style={{ color: `rgb(var(--text-secondary))` }}>
                 Revolutionizing the lending industry with blockchain technology, NFT tokenization, and decentralized finance protocols.
               </p>
             </div>
@@ -258,30 +320,32 @@ const Layout = ({ children }: LayoutProps) => {
             <div>
               <h3 className="text-lg font-semibold mb-6">Platform</h3>
               <ul className="space-y-3">
-                <li><Link to="/marketplace" className="text-gray-300 hover:text-white transition-colors">Marketplace</Link></li>
-                <li><Link to="/loans/request" className="text-gray-300 hover:text-white transition-colors">Request Loan</Link></li>
-                <li><Link to="/portfolio" className="text-gray-300 hover:text-white transition-colors">Portfolio</Link></li>
-                <li><Link to="/kyc" className="text-gray-300 hover:text-white transition-colors">KYC Verification</Link></li>
+                <li><Link to="/marketplace" className="transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-secondary))` }}>Marketplace</Link></li>
+                <li><Link to="/loans/request" className="transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-secondary))` }}>Request Loan</Link></li>
+                <li><Link to="/portfolio" className="transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-secondary))` }}>Portfolio</Link></li>
+                <li><Link to="/kyc" className="transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-secondary))` }}>KYC Verification</Link></li>
               </ul>
             </div>
             
             <div>
               <h3 className="text-lg font-semibold mb-6">Support</h3>
               <ul className="space-y-3">
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Contact Us</a></li>
+                <li><a href="#" className="transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-secondary))` }}>Help Center</a></li>
+                <li><a href="#" className="transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-secondary))` }}>Documentation</a></li>
+                <li><a href="#" className="transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-secondary))` }}>Contact Us</a></li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">
+          <div className="border-t mt-12 pt-8 flex flex-col md:flex-row justify-between items-center" style={{
+            borderColor: `rgb(var(--border-primary))`
+          }}>
+            <p className="text-sm" style={{ color: `rgb(var(--text-muted))` }}>
               © 2025 OrbitLend. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
-              <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
+              <a href="#" className="text-sm transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-muted))` }}>Privacy Policy</a>
+              <a href="#" className="text-sm transition-colors duration-300 hover:text-indigo-500" style={{ color: `rgb(var(--text-muted))` }}>Terms of Service</a>
             </div>
           </div>
         </div>

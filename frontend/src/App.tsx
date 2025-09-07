@@ -1,7 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuthStore } from './stores/authStore'
 import { Toaster } from 'react-hot-toast'
+import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/Layout'
+import Preloader from './components/Preloader'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 
@@ -33,216 +36,451 @@ import AdminUsers from './pages/admin/AdminUsers'
 
 function App() {
   const { user, isAuthenticated } = useAuthStore()
+  const [showPreloader, setShowPreloader] = useState(true)
+
+  const handlePreloaderComplete = () => {
+    setShowPreloader(false)
+  }
+
+  if (showPreloader) {
+    return <Preloader onComplete={handlePreloaderComplete} />
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Routes>
-        {/* Public routes */}
-        <Route
-          path="/"
-          element={
-            <Layout>
-              <Home />
-            </Layout>
-          }
-        />
+    <ThemeProvider>
+      <div className="min-h-screen transition-colors duration-300" style={{ 
+        background: `rgb(var(--bg-primary))`,
+        color: `rgb(var(--text-primary))`
+      }}>
+        <Routes>
+          {/* Public routes */}
+          <Route
+            path="/"
+            element={
+              <Layout>
+                <Home />
+              </Layout>
+            }
+          />
+          
+          {/* Auth routes - redirect if already authenticated */}
+          <Route
+            path="/login"
+            element={
+              isAuthenticated ? (
+                <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+              ) : (
+                <Layout>
+                  <Login />
+                </Layout>
+              )
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              isAuthenticated ? (
+                <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+              ) : (
+                <Layout>
+                  <Register />
+                </Layout>
+              )
+            }
+          />
+
+          {/* Protected user routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Profile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/kyc"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <KYCVerification />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/nft-transfer"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NFTTransfer />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/loans/request"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LoanRequest />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/loans/my-loans"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyLoans />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/loans/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LoanDetails />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/marketplace"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Marketplace />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/marketplace/nft/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NFTDetails />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/portfolio"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Portfolio />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Test routes */}
+          <Route
+            path="/test/websocket"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <WebSocketTest />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin routes with nested structure */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          >
+            {/* Nested admin routes */}
+            <Route index element={<AdminOverview />} />
+            <Route path="loans" element={<AdminLoans />} />
+            <Route path="request" element={<AdminRequestLoan />} />
+            <Route path="marketplace" element={<AdminMarketplace />} />
+            <Route path="users" element={<AdminUsers />} />
+          </Route>
+
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
         
-        {/* Auth routes - redirect if already authenticated */}
-        <Route
-          path="/login"
-          element={
-            isAuthenticated ? (
-              <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
-            ) : (
-              <Layout>
-                <Login />
-              </Layout>
-            )
-          }
-        />
-        <Route
-          path="/register"
-          element={
-            isAuthenticated ? (
-              <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
-            ) : (
-              <Layout>
-                <Register />
-              </Layout>
-            )
-          }
-        />
+        {/* Toast notifications */}
+          return (
+    <ThemeProvider>
+      <div className="App">
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/login"
+            element={
+              isAuthenticated ? (
+                <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+              ) : (
+                <Layout>
+                  <Login />
+                </Layout>
+              )
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              isAuthenticated ? (
+                <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+              ) : (
+                <Layout>
+                  <Register />
+                </Layout>
+              )
+            }
+          />
 
-        {/* Protected user routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Dashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Profile />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected user routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Profile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/kyc"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <KYCVerification />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/kyc"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <KYCVerification />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/nft-transfer"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <NFTTransfer />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/nft-transfer"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NFTTransfer />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/loans/request"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <LoanRequest />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/loans/request"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LoanRequest />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/loans/my-loans"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <MyLoans />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/loans/my-loans"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyLoans />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/loans/:id"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <LoanDetails />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/loans/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LoanDetails />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/marketplace"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Marketplace />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/marketplace"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Marketplace />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/marketplace/nft/:id"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <NFTDetails />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/marketplace/nft/:id"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NFTDetails />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/portfolio"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Portfolio />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/portfolio"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Portfolio />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Test routes */}
-        <Route
-          path="/test/websocket"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <WebSocketTest />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          {/* Admin routes */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
 
-        {/* Admin routes with nested structure */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        >
-          {/* Nested admin routes */}
-          <Route index element={<AdminOverview />} />
-          <Route path="loans" element={<AdminLoans />} />
-          <Route path="request" element={<AdminRequestLoan />} />
-          <Route path="marketplace" element={<AdminMarketplace />} />
-          <Route path="users" element={<AdminUsers />} />
-        </Route>
+          <Route
+            path="/admin/overview"
+            element={
+              <AdminRoute>
+                <AdminOverview />
+              </AdminRoute>
+            }
+          />
 
-        {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      
-      {/* Toast notifications */}
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#10B981',
-              secondary: '#fff',
+          <Route
+            path="/admin/loans"
+            element={
+              <AdminRoute>
+                <AdminLoans />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin/loans/request"
+            element={
+              <AdminRoute>
+                <AdminRequestLoan />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin/marketplace"
+            element={
+              <AdminRoute>
+                <AdminMarketplace />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <AdminUsers />
+              </AdminRoute>
+            }
+          />
+
+          {/* Test routes */}
+          <Route
+            path="/test/websocket"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <WebSocketTest />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: 'rgb(var(--bg-card))',
+              color: 'rgb(var(--text-primary))',
+              border: '1px solid rgb(var(--border-primary))',
+              borderRadius: '16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              boxShadow: 'var(--shadow-lg)',
             },
-          },
-          error: {
-            duration: 5000,
-            iconTheme: {
-              primary: '#EF4444',
-              secondary: '#fff',
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: 'rgb(var(--color-success))',
+                secondary: 'rgb(var(--bg-card))',
+              },
             },
-          },
-        }}
-      />
-    </div>
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: 'rgb(var(--color-error))',
+                secondary: 'rgb(var(--bg-card))',
+              },
+            },
+          }}
+        />
+      </div>
+    </ThemeProvider>
+  )
+      </div>
+    </ThemeProvider>
   )
 }
 

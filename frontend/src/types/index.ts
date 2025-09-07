@@ -21,6 +21,7 @@ export interface User {
     uploadDate: string
   }
   walletAddress?: string
+  isWalletUser?: boolean
   isActive: boolean
   fullName: string
   createdAt: string

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { 
   CreditCard, 
   Wallet, 
@@ -18,10 +18,12 @@ import {
   DollarSign,
   Target,
   Wifi,
-  WifiOff
+  WifiOff,
+  LogOut
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useLoanWebSocket } from '../hooks/useWebSocket'
+import { toast } from 'react-hot-toast'
 
 interface DashboardStats {
   totalLoans: number
@@ -45,8 +47,9 @@ interface RecentTransaction {
 }
 
 const Dashboard = () => {
-  const { user } = useAuthStore()
+  const { user, logout } = useAuthStore()
   const { isConnected, onLoanStatus, onLoanFunded, onKYCStatus } = useLoanWebSocket()
+  const navigate = useNavigate()
   
   const [stats, setStats] = useState<DashboardStats>({
     totalLoans: 3,
@@ -211,8 +214,34 @@ const Dashboard = () => {
             </p>
           </div>
           
-          {/* WebSocket Connection Status */}
-          <div className="flex items-center space-x-2">
+          {/* Right side actions and status */}
+          <div className="flex items-center space-x-4">
+            {/* Wallet User Quick Actions */}
+            {user?.isWalletUser && (
+              <div className="flex items-center space-x-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl px-4 py-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-700">
+                    {user?.walletAddress?.slice(0, 6)}...{user?.walletAddress?.slice(-4)}
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-gray-300"></div>
+                <button
+                  onClick={() => {
+                    logout()
+                    toast.success('Wallet disconnected successfully')
+                    navigate('/login')
+                  }}
+                  className="flex items-center space-x-1 text-sm text-red-600 hover:text-red-700 transition-colors"
+                  title="Disconnect Wallet"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Disconnect</span>
+                </button>
+              </div>
+            )}
+            
+            {/* WebSocket Connection Status */}
             <div className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium ${
               isConnected 
                 ? 'bg-green-100 text-green-800' 

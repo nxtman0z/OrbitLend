@@ -80,26 +80,32 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{
+      background: `linear-gradient(135deg, rgb(var(--bg-primary)), rgb(var(--bg-secondary)))`
+    }}>
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="mx-auto w-20 h-20 bg-white/10 backdrop-blur-lg rounded-2xl flex items-center justify-center mb-4 shadow-2xl border border-white/20">
+          <div className="mx-auto w-20 h-20 glass-premium rounded-2xl flex items-center justify-center mb-4 shadow-2xl">
             <img 
               src="/logo-optimized.jpg" 
               alt="OrbitLend Logo" 
               className="w-16 h-16 rounded-xl object-contain"
             />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-gray-300">Sign in to your OrbitLend account</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: `rgb(var(--text-primary))` }}>
+            Welcome Back
+          </h1>
+          <p style={{ color: `rgb(var(--text-secondary))` }}>
+            Sign in to your OrbitLend account
+          </p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white/20">
+        <div className="glass-premium rounded-2xl p-8 shadow-2xl">
           {/* User Type Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-white mb-3">
+            <label className="block text-sm font-semibold mb-3" style={{ color: `rgb(var(--text-primary))` }}>
               Login as
             </label>
             <div className="flex space-x-4">
@@ -108,9 +114,14 @@ const Login: React.FC = () => {
                 onClick={() => setValue('userType', 'user')}
                 className={`flex-1 p-3 rounded-xl border-2 transition-all duration-200 ${
                   userType === 'user'
-                    ? 'border-blue-400 bg-blue-500/20 text-white'
-                    : 'border-gray-400/30 bg-white/5 text-gray-300 hover:border-gray-300 hover:bg-white/10'
+                    ? 'border-indigo-400 bg-indigo-500/20'
+                    : 'border-gray-400/30 hover:border-gray-300'
                 }`}
+                style={{
+                  color: userType === 'user' ? `rgb(var(--color-primary))` : `rgb(var(--text-secondary))`,
+                  background: userType === 'user' ? `rgb(var(--color-primary) / 0.1)` : `rgb(var(--bg-card))`,
+                  borderColor: userType === 'user' ? `rgb(var(--color-primary))` : `rgb(var(--border-primary))`
+                }}
               >
                 <User className="w-5 h-5 mx-auto mb-1" />
                 <span className="text-sm font-medium">User</span>
@@ -120,60 +131,66 @@ const Login: React.FC = () => {
                 onClick={() => setValue('userType', 'admin')}
                 className={`flex-1 p-3 rounded-xl border-2 transition-all duration-200 ${
                   userType === 'admin'
-                    ? 'border-purple-400 bg-purple-500/20 text-white'
-                    : 'border-gray-400/30 bg-white/5 text-gray-300 hover:border-gray-300 hover:bg-white/10'
+                    ? 'border-purple-400 bg-purple-500/20'
+                    : 'border-gray-400/30 hover:border-gray-300'
                 }`}
+                style={{
+                  color: userType === 'admin' ? `rgb(var(--color-secondary))` : `rgb(var(--text-secondary))`,
+                  background: userType === 'admin' ? `rgb(var(--color-secondary) / 0.1)` : `rgb(var(--bg-card))`,
+                  borderColor: userType === 'admin' ? `rgb(var(--color-secondary))` : `rgb(var(--border-primary))`
+                }}
               >
                 <Shield className="w-5 h-5 mx-auto mb-1" />
                 <span className="text-sm font-medium">Admin</span>
               </button>
             </div>
             {errors.userType && (
-              <p className="text-red-400 text-sm mt-1">{errors.userType.message}</p>
+              <p className="text-red-500 text-sm mt-1">{errors.userType.message}</p>
             )}
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-semibold text-white mb-2">
+              <label className="block text-sm font-semibold mb-2" style={{ color: `rgb(var(--text-primary))` }}>
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5" style={{ color: `rgb(var(--text-muted))` }} />
                 </div>
                 <input
                   {...register('email')}
                   type="email"
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-gray-400/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="input-premium pl-10"
                   placeholder="Enter your email"
                 />
               </div>
               {errors.email && (
-                <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
               )}
             </div>
 
             {/* Password Field */}
             <div>
-              <label className="block text-sm font-semibold text-white mb-2">
+              <label className="block text-sm font-semibold mb-2" style={{ color: `rgb(var(--text-primary))` }}>
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5" style={{ color: `rgb(var(--text-muted))` }} />
                 </div>
                 <input
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
-                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-gray-400/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="input-premium pl-10 pr-12"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center transition-colors"
+                  style={{ color: `rgb(var(--text-muted))` }}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -183,7 +200,7 @@ const Login: React.FC = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-400 text-sm mt-1">{errors.password.message}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 
@@ -191,11 +208,11 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-all duration-200 ${
+              className={`btn-premium w-full ${
                 userType === 'admin'
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700'
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+                  ? 'from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700'
+                  : ''
+              }`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
@@ -210,9 +227,9 @@ const Login: React.FC = () => {
 
           {/* Divider */}
           <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-400/30"></div>
-            <span className="px-4 text-gray-400 text-sm">OR</span>
-            <div className="flex-1 border-t border-gray-400/30"></div>
+            <div className="flex-1 border-t" style={{ borderColor: `rgb(var(--border-primary))` }}></div>
+            <span className="px-4 text-sm" style={{ color: `rgb(var(--text-muted))` }}>OR</span>
+            <div className="flex-1 border-t" style={{ borderColor: `rgb(var(--border-primary))` }}></div>
           </div>
 
           {/* Wallet Login */}
@@ -222,11 +239,12 @@ const Login: React.FC = () => {
 
           {/* Footer Links */}
           <div className="mt-6 text-center">
-            <p className="text-gray-400 text-sm">
+            <p className="text-sm" style={{ color: `rgb(var(--text-secondary))` }}>
               Don't have an account?{' '}
               <button
                 onClick={() => navigate('/register')}
-                className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                className="font-semibold transition-colors hover:underline"
+                style={{ color: `rgb(var(--color-primary))` }}
               >
                 Sign up
               </button>
@@ -236,11 +254,15 @@ const Login: React.FC = () => {
 
         {/* Additional Info */}
         <div className="mt-6 text-center">
-          <p className="text-gray-400 text-xs">
+          <p className="text-xs" style={{ color: `rgb(var(--text-muted))` }}>
             By signing in, you agree to our{' '}
-            <span className="text-blue-400 cursor-pointer hover:underline">Terms of Service</span>
+            <span className="cursor-pointer hover:underline transition-colors" style={{ color: `rgb(var(--color-primary))` }}>
+              Terms of Service
+            </span>
             {' '}and{' '}
-            <span className="text-blue-400 cursor-pointer hover:underline">Privacy Policy</span>
+            <span className="cursor-pointer hover:underline transition-colors" style={{ color: `rgb(var(--color-primary))` }}>
+              Privacy Policy
+            </span>
           </p>
         </div>
       </div>
