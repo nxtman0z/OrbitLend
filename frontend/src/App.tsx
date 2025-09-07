@@ -24,9 +24,6 @@ import Marketplace from './pages/marketplace/Marketplace'
 import NFTDetails from './pages/marketplace/NFTDetails'
 import Portfolio from './pages/portfolio/Portfolio'
 
-// Test pages
-import WebSocketTest from './pages/test/WebSocketTest'
-
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminOverview from './pages/admin/AdminOverview'
@@ -207,18 +204,6 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Portfolio />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Test routes */}
-          <Route
-            path="/test/websocket"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <WebSocketTest />
                 </Layout>
               </ProtectedRoute>
             }

@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react'
 import { useQuery } from 'react-query'
 import { apiService } from '../../services/api'
 import { NFTLoan } from '../../types'
-import React from 'react'
 import { Search, Clock, DollarSign, TrendingUp, Users, Star, ExternalLink, RefreshCw, Grid, List, AlertCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
@@ -43,7 +42,7 @@ const Marketplace = () => {
       cacheTime: 10 * 60 * 1000, // 10 minutes
       retry: 2,
       refetchOnWindowFocus: false,
-      onError: (error) => {
+      onError: (error: Error) => {
         console.error('Marketplace error:', error)
         toast.error('Failed to load marketplace data. Using demo data.')
       }
@@ -142,7 +141,7 @@ const Marketplace = () => {
   }
 
   // Optimized filtering and sorting with useMemo
-  const { filteredLoans, sortedLoans } = useMemo(() => {
+  const sortedLoans = useMemo(() => {
     const filtered = marketplaceLoans.filter((nft: NFTLoan) => {
       const loanDetails = nft.metadata?.loanDetails
       if (!loanDetails) return false
@@ -178,7 +177,7 @@ const Marketplace = () => {
       }
     })
 
-    return { filteredLoans: filtered, sortedLoans: sorted }
+    return sorted
   }, [marketplaceLoans, debouncedSearchTerm, sortBy, filterByAmount, filterByRate])
 
   const formatCurrency = (amount: number) => {

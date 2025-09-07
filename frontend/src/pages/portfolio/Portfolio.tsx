@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { apiService } from '../../services/api'
 import { Loan } from '../../types'
-import React from 'react'
 import { 
   TrendingUp, 
   DollarSign, 
@@ -39,7 +38,7 @@ const Portfolio = () => {
     {
       refetchInterval: 30000,
       retry: 3,
-      onError: (error) => {
+      onError: (error: Error) => {
         console.error('Portfolio error:', error)
         toast.error('Failed to load portfolio data. Using demo data.')
       }
@@ -236,7 +235,7 @@ const Portfolio = () => {
                   <RefreshCw className="w-4 h-4" />
                   <span>Refresh</span>
                 </button>
-              ) as React.ReactNode}
+              )}
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setViewMode('grid')}

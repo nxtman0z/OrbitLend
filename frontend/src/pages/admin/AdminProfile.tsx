@@ -63,6 +63,14 @@ interface SystemSettings {
   }
 }
 
+type TabId = 'basic' | 'password' | 'wallet' | 'settings' | 'system'
+
+interface Tab {
+  id: TabId
+  label: string
+  icon: any
+}
+
 const AdminProfile = () => {
   const { user, updateUser, logout } = useAuthStore()
   const navigate = useNavigate()
@@ -347,7 +355,7 @@ const AdminProfile = () => {
     return <div>Loading...</div>
   }
 
-  const tabs = [
+  const tabs: Tab[] = [
     { id: 'basic', label: 'Basic Info', icon: UserIcon },
     { id: 'password', label: 'Password', icon: Edit3 },
     { id: 'wallet', label: 'Wallet', icon: CreditCard },
@@ -479,7 +487,7 @@ const AdminProfile = () => {
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                      onClick={() => setActiveTab(tab.id)}
                       className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                         activeTab === tab.id
                           ? 'border-blue-500 text-blue-600'
