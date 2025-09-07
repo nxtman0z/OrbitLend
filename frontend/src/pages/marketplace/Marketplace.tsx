@@ -1,306 +1,507 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQuery } from 'react-query'
 import { apiService } from '../../services/api'
-import { Loan } from '../../types'
-import { Search, Filter, Clock, DollarSign, TrendingUp, Users, Star, ExternalLink } from 'lucide-react'
+import { NFTLoan } from '../../types'
+import React from 'react'
+import { Search, Clock, DollarSign, TrendingUp, Users, Star, ExternalLink, RefreshCw, Grid, List, AlertCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 
 const Marketplace = () => {
   const [searchTerm, setSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState<'amount' | 'interestRate' | 'duration' | 'newest'>('newest')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const [sortBy, setSortBy] = useState<'amount' | 'interestRate' | 'termMonths' | 'newest'>('newest')
   const [filterByAmount, setFilterByAmount] = useState<'all' | 'small' | 'medium' | 'large'>('all')
   const [filterByRate, setFilterByRate] = useState<'all' | 'low' | 'medium' | 'high'>('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-  // Fetch approved loans for marketplace using regular loans endpoint with approved status filter
-  const { data: loansResponse, isLoading, error } = useQuery(
-    ['marketplace-loans', { searchTerm, sortBy, filterByAmount, filterByRate }],
-    () => apiService.getMyLoans({
-      purpose: searchTerm || undefined,
-      sortBy,
-      page: 1,
-      limit: 50
-    }),
+  // Debounce search term to improve performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Fetch marketplace data using NFTLoan endpoint with optimization
+  const { data: loansResponse, isLoading, error, refetch } = useQuery(
+    ['marketplace-loans'],
+    async () => {
+      try {
+        return await apiService.browseMarketplace({
+          page: 1,
+          limit: 20 // Reduce initial load
+        })
+      } catch (err) {
+        console.error('Failed to fetch marketplace data:', err)
+        throw err
+      }
+    },
     {
-      refetchInterval: 30000, // Refresh every 30 seconds
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 2,
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error('Marketplace error:', error)
+        toast.error('Failed to load marketplace data. Using demo data.')
+      }
     }
   )
 
-  const allLoans = loansResponse?.data?.loans || []
-  // Filter to only show approved loans that could be funded by others
-  const loans = allLoans.filter(loan => loan.status === 'approved')
+  // Optimized demo data - smaller dataset
+  const demoData: NFTLoan[] = [
+    {
+      _id: 'demo-1',
+      loanId: 'loan-1',
+      tokenId: '4521',
+      contractAddress: '0x123...abc',
+      transactionHash: '0x456...def',
+      ownerAddress: '0x789...ghi',
+      previousOwners: [],
+      metadata: {
+        name: 'Premium Art Loan NFT',
+        description: 'High-value digital art collection',
+        image: 'https://via.placeholder.com/300x300/8b5cf6/ffffff?text=Art+NFT',
+        attributes: [],
+        loanDetails: {
+          amount: 15000,
+          interestRate: 8.5,
+          termMonths: 18,
+          purpose: 'Premium Art NFT Collection',
+          status: 'active',
+          approvalDate: new Date('2024-01-16').toISOString()
+        }
+      },
+      verbwireData: {
+        mintedAt: new Date('2024-01-15').toISOString(),
+        network: 'ethereum'
+      },
+      marketplaceStatus: 'listed',
+      listingPrice: 16500,
+      listingDate: new Date('2024-01-20').toISOString(),
+      isActive: true,
+      createdAt: new Date('2024-01-15').toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      _id: 'demo-2',
+      loanId: 'loan-2',
+      tokenId: '7892',
+      contractAddress: '0x234...bcd',
+      transactionHash: '0x567...efg',
+      ownerAddress: '0x890...hij',
+      previousOwners: [],
+      metadata: {
+        name: 'Gaming NFT Investment',
+        description: 'Rare gaming assets with high liquidity',
+        image: 'https://via.placeholder.com/300x300/3b82f6/ffffff?text=Game+NFT',
+        attributes: [],
+        loanDetails: {
+          amount: 8000,
+          interestRate: 10.2,
+          termMonths: 6,
+          purpose: 'Gaming NFT Investment',
+          status: 'active',
+          approvalDate: new Date('2024-01-12').toISOString()
+        }
+      },
+      verbwireData: {
+        mintedAt: new Date('2024-01-10').toISOString(),
+        network: 'ethereum'
+      },
+      marketplaceStatus: 'listed',
+      listingPrice: 8500,
+      listingDate: new Date('2024-01-18').toISOString(),
+      isActive: true,
+      createdAt: new Date('2024-01-10').toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  ]
 
+  // Get loans from API or use demo data - check for loans key in response
+  const nftLoans = error ? demoData : (loansResponse?.data?.loans || loansResponse?.data?.nfts || demoData)
+  
+  // Filter to only show listed/active NFT loans
+  const marketplaceLoans = nftLoans.filter((nft: NFTLoan) => 
+    nft.marketplaceStatus === 'listed' && nft.isActive && nft.metadata?.loanDetails
+  )
+
+  // Helper functions for categorization
   const getAmountCategory = (amount: number) => {
-    if (amount < 1) return 'small'
-    if (amount < 10) return 'medium'
+    if (amount < 5000) return 'small'
+    if (amount < 15000) return 'medium'
     return 'large'
   }
 
   const getRateCategory = (rate: number) => {
-    if (rate < 5) return 'low'
-    if (rate < 15) return 'medium'
+    if (rate < 8) return 'low'
+    if (rate < 12) return 'medium'
     return 'high'
   }
 
-  const filteredLoans = loans.filter((loan: Loan) => {
-    const userSearchTerm = typeof loan.userId === 'string' ? loan.userId : loan.userId?.email || ''
-    const matchesSearch = loan.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         userSearchTerm.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         loan.amount.toString().includes(searchTerm)
-    
-    const matchesAmount = filterByAmount === 'all' || getAmountCategory(loan.amount) === filterByAmount
-    const matchesRate = filterByRate === 'all' || getRateCategory(loan.interestRate) === filterByRate
-    
-    return matchesSearch && matchesAmount && matchesRate
-  })
+  // Optimized filtering and sorting with useMemo
+  const { filteredLoans, sortedLoans } = useMemo(() => {
+    const filtered = marketplaceLoans.filter((nft: NFTLoan) => {
+      const loanDetails = nft.metadata?.loanDetails
+      if (!loanDetails) return false
 
-  const sortedLoans = [...filteredLoans].sort((a, b) => {
-    switch (sortBy) {
-      case 'amount':
-        return b.amount - a.amount
-      case 'interestRate':
-        return b.interestRate - a.interestRate
-      case 'duration':
-        return (a.termMonths || 0) - (b.termMonths || 0)
-      case 'newest':
-      default:
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    }
-  })
+      const matchesSearch = debouncedSearchTerm === '' || 
+        nft.metadata.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        nft.metadata.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        loanDetails.purpose.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        nft.tokenId.includes(debouncedSearchTerm)
+      
+      const matchesAmount = filterByAmount === 'all' || getAmountCategory(loanDetails.amount) === filterByAmount
+      const matchesRate = filterByRate === 'all' || getRateCategory(loanDetails.interestRate) === filterByRate
 
-  const stats = {
-    totalLoans: loans.length,
-    totalValue: loans.reduce((sum, loan) => sum + loan.amount, 0),
-    avgInterestRate: loans.length > 0 ? loans.reduce((sum, loan) => sum + loan.interestRate, 0) / loans.length : 0,
-    popularCategory: 'Business Investment' // This could be calculated from data
+      return matchesSearch && matchesAmount && matchesRate
+    })
+
+    const sorted = [...filtered].sort((a, b) => {
+      const aLoan = a.metadata?.loanDetails
+      const bLoan = b.metadata?.loanDetails
+      if (!aLoan || !bLoan) return 0
+
+      switch (sortBy) {
+        case 'amount':
+          return bLoan.amount - aLoan.amount
+        case 'interestRate':
+          return aLoan.interestRate - bLoan.interestRate
+        case 'termMonths':
+          return aLoan.termMonths - bLoan.termMonths
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        default:
+          return 0
+      }
+    })
+
+    return { filteredLoans: filtered, sortedLoans: sorted }
+  }, [marketplaceLoans, debouncedSearchTerm, sortBy, filterByAmount, filterByRate])
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  const getUserName = (ownerAddress: string) => {
+    return `${ownerAddress.slice(0, 6)}...${ownerAddress.slice(-4)}`
   }
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-gray-200 h-24 rounded-lg"></div>
-            ))}
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-300 rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/4 mb-8"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="bg-white rounded-xl p-6 shadow-sm">
+                  <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="space-y-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-gray-200 h-32 rounded-lg"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-red-800">Failed to load marketplace data. Please try again later.</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Loan Marketplace</h1>
-        <p className="text-gray-600">Discover and fund approved loan opportunities</p>
-      </div>
-
-      {/* Market Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
             <div>
-              <p className="text-blue-100 text-sm">Available Loans</p>
-              <p className="text-2xl font-bold">{stats.totalLoans}</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">NFT Loan Marketplace</h1>
+              <p className="text-gray-600">Discover and invest in NFT-backed loans</p>
             </div>
-            <Users className="h-8 w-8 text-blue-200" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm">Total Value</p>
-              <p className="text-2xl font-bold">{stats.totalValue.toFixed(2)} ETH</p>
+            <div className="flex items-center space-x-4 mt-4 md:mt-0">
+              {error && (
+                <button
+                  onClick={() => refetch()}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Retry</span>
+                </button>
+              )}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <Grid className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  <List className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <DollarSign className="h-8 w-8 text-green-200" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100 text-sm">Avg Interest Rate</p>
-              <p className="text-2xl font-bold">{stats.avgInterestRate.toFixed(1)}%</p>
-            </div>
-            <TrendingUp className="h-8 w-8 text-purple-200" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-orange-100 text-sm">Popular Category</p>
-              <p className="text-lg font-bold">{stats.popularCategory}</p>
-            </div>
-            <Star className="h-8 w-8 text-orange-200" />
-          </div>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Search loans..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
           </div>
 
-          {/* Sort By */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="newest">Newest First</option>
-            <option value="amount">Highest Amount</option>
-            <option value="interestRate">Highest Rate</option>
-            <option value="duration">Shortest Term</option>
-          </select>
-
-          {/* Amount Filter */}
-          <select
-            value={filterByAmount}
-            onChange={(e) => setFilterByAmount(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Amounts</option>
-            <option value="small">Small (&lt; 1 ETH)</option>
-            <option value="medium">Medium (1-10 ETH)</option>
-            <option value="large">Large (&gt; 10 ETH)</option>
-          </select>
-
-          {/* Rate Filter */}
-          <select
-            value={filterByRate}
-            onChange={(e) => setFilterByRate(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Rates</option>
-            <option value="low">Low (&lt; 5%)</option>
-            <option value="medium">Medium (5-15%)</option>
-            <option value="high">High (&gt; 15%)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Loan Listings */}
-      {sortedLoans.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <Filter className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No loans found</h3>
-          <p className="text-gray-500">Try adjusting your search or filter criteria</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {sortedLoans.map((loan: Loan) => (
-            <div key={loan._id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="p-6">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {loan.purpose}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      by {typeof loan.userId === 'string' ? loan.userId : loan.userId?.email || 'Anonymous'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900">{loan.amount} ETH</p>
-                    <p className="text-sm text-green-600 font-medium">{loan.interestRate}% APR</p>
-                  </div>
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
                 </div>
-
-                {/* Loan Details */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="h-4 w-4 mr-2" />
-                    {loan.termMonths || 'N/A'} months
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    {((loan.amount * (loan.interestRate / 100) * ((loan.termMonths || 1) / 12)) + loan.amount).toFixed(2)} ETH total
-                  </div>
-                </div>
-
-                {/* Collateral Info */}
-                {loan.collateral && (
-                  <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                    <p className="text-xs font-medium text-gray-700 mb-1">Collateral</p>
-                    <p className="text-sm text-gray-600">{loan.collateral.type} - {loan.collateral.value} ETH</p>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{loan.collateral.description}</p>
-                  </div>
-                )}
-
-                {/* Risk Assessment */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">Risk Level:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      loan.interestRate < 5 ? 'bg-green-100 text-green-800' :
-                      loan.interestRate < 15 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {loan.interestRate < 5 ? 'Low' : loan.interestRate < 15 ? 'Medium' : 'High'}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Listed {new Date(loan.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex space-x-3">
-                  <Link
-                    to={`/loans/${loan._id}`}
-                    className="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
-                  >
-                    View Details
-                  </Link>
-                  <button className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Fund Loan
-                  </button>
+                <div>
+                  <p className="text-sm text-gray-600">Total Listed</p>
+                  <p className="text-xl font-bold text-gray-900">{sortedLoans.length}</p>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Total Value</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {formatCurrency(sortedLoans.reduce((sum, nft) => sum + (nft.metadata?.loanDetails?.amount || 0), 0))}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Users className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Active Lenders</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {new Set(sortedLoans.map(nft => getUserName(nft.ownerAddress))).size}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Star className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Avg. Rate</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {sortedLoans.length > 0 ? 
+                      (sortedLoans.reduce((sum, nft) => sum + (nft.metadata?.loanDetails?.interestRate || 0), 0) / sortedLoans.length).toFixed(1) + '%'
+                      : '0%'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {/* Load More / Pagination could go here */}
-      {sortedLoans.length > 0 && (
-        <div className="mt-8 text-center">
-          <button className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            Load More Loans
-          </button>
+          {error && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+                <p className="text-yellow-800">
+                  Unable to load live data. Showing demo marketplace loans.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Filters */}
+        <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search loans, users, or descriptions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Sort By */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="newest">Newest First</option>
+                <option value="amount">Highest Amount</option>
+                <option value="interestRate">Lowest Rate</option>
+                <option value="termMonths">Shortest Term</option>
+              </select>
+            </div>
+
+            {/* Filter by Amount */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Amount Range</label>
+              <select
+                value={filterByAmount}
+                onChange={(e) => setFilterByAmount(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Amounts</option>
+                <option value="small">Under $5K</option>
+                <option value="medium">$5K - $15K</option>
+                <option value="large">Over $15K</option>
+              </select>
+            </div>
+
+            {/* Filter by Rate */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Interest Rate</label>
+              <select
+                value={filterByRate}
+                onChange={(e) => setFilterByRate(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Rates</option>
+                <option value="low">Under 8%</option>
+                <option value="medium">8% - 12%</option>
+                <option value="high">Over 12%</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Loans Grid/List */}
+        {sortedLoans.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Search className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No loans found</h3>
+            <p className="text-gray-600">Try adjusting your search criteria or filters</p>
+          </div>
+        ) : (
+          <div className={viewMode === 'grid' 
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+            : "space-y-4"
+          }>
+            {sortedLoans.map((loan) => (
+              <div key={loan._id} className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow ${
+                viewMode === 'list' ? 'p-6' : 'p-6'
+              }`}>
+                {viewMode === 'grid' ? (
+                  // Grid View
+                  <>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{loan.metadata?.name || 'NFT Loan'}</h3>
+                        <p className="text-sm text-gray-600 mb-2">by {getUserName(loan.ownerAddress)}</p>
+                        <p className="text-sm text-gray-500 line-clamp-2">{loan.metadata?.description || 'NFT-backed loan on the marketplace'}</p>
+                      </div>
+                      <div className="ml-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Listed
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 mb-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Loan Amount</span>
+                        <span className="text-lg font-bold text-gray-900">{formatCurrency(loan.metadata?.loanDetails?.amount || 0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Interest Rate</span>
+                        <span className="text-sm font-medium text-blue-600">{loan.metadata?.loanDetails?.interestRate || 0}%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Duration</span>
+                        <span className="text-sm text-gray-900">{loan.metadata?.loanDetails?.termMonths || 0} months</span>
+                      </div>
+                      {loan.listingPrice && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Market Price</span>
+                          <span className="text-lg font-bold text-green-600">{formatCurrency(loan.listingPrice)}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Clock className="w-4 h-4 mr-1" />
+                        {formatDate(loan.createdAt)}
+                      </div>
+                      <Link
+                        to={`/nft/${loan._id}`}
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        View Details
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  // List View
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900">{loan.metadata?.name || 'NFT Loan'}</h3>
+                          <p className="text-sm text-gray-600">by {getUserName(loan.ownerAddress)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-gray-900">{formatCurrency(loan.metadata?.loanDetails?.amount || 0)}</p>
+                          <p className="text-sm text-blue-600">{loan.metadata?.loanDetails?.interestRate || 0}% APR</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">{loan.metadata?.loanDetails?.termMonths || 0} months</p>
+                          <p className="text-sm text-gray-500">{formatDate(loan.createdAt)}</p>
+                        </div>
+                        <div>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Listed
+                          </span>
+                        </div>
+                        <Link
+                          to={`/nft/${loan._id}`}
+                          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          View Details
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

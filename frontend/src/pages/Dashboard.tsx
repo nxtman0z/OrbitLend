@@ -19,11 +19,14 @@ import {
   Target,
   Wifi,
   WifiOff,
-  LogOut
+  LogOut,
+  User,
+  Settings
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useLoanWebSocket } from '../hooks/useWebSocket'
 import { toast } from 'react-hot-toast'
+import Chatbot from '../components/Chatbot'
 
 interface DashboardStats {
   totalLoans: number
@@ -393,11 +396,30 @@ const Dashboard = () => {
                 </Link>
                 
                 <Link
+                  to="/profile"
+                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
+                >
+                  <Settings className="w-8 h-8 text-orange-600 mb-2" />
+                  <span className="text-sm font-medium text-gray-900">Profile Settings</span>
+                </Link>
+              </div>
+              
+              {/* Secondary Quick Actions */}
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mt-4">
+                <Link
                   to="/portfolio"
                   className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
                 >
                   <TrendingUp className="w-8 h-8 text-indigo-600 mb-2" />
                   <span className="text-sm font-medium text-gray-900">Portfolio</span>
+                </Link>
+                
+                <Link
+                  to="/kyc"
+                  className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-yellow-300 hover:bg-yellow-50 transition-colors"
+                >
+                  <Shield className="w-8 h-8 text-yellow-600 mb-2" />
+                  <span className="text-sm font-medium text-gray-900">KYC Verification</span>
                 </Link>
               </div>
             </div>
@@ -494,6 +516,9 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Chatbot Widget */}
+      <Chatbot />
     </div>
   )
 }

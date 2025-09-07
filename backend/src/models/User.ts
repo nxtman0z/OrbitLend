@@ -25,6 +25,7 @@ export interface IUser extends Document {
   };
   walletAddress?: string;
   isWalletUser?: boolean;
+  profilePicture?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -97,6 +98,10 @@ const userSchema = new Schema<IUser>({
   isWalletUser: {
     type: Boolean,
     default: false
+  },
+  profilePicture: {
+    type: String,
+    trim: true
   },
   isActive: {
     type: Boolean,

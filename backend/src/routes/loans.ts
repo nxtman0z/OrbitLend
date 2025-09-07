@@ -396,4 +396,376 @@ router.get('/marketplace/list',
   }
 );
 
+/**
+ * ADMIN ENDPOINTS
+ */
+
+/**
+ * @route   GET /api/loans/admin/requests
+ * @desc    Get all loan requests for admin review
+ * @access  Private (Admin only)
+ */
+router.get('/admin/requests', 
+  authorize('admin'), 
+  [
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('status').optional().isIn(['pending', 'approved', 'rejected', 'active', 'completed', 'defaulted']).withMessage('Invalid status'),
+    query('search').optional().isString().withMessage('Search must be a string')
+  ],
+  handleValidationErrors,
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const status = req.query.status as string;
+      const search = req.query.search as string;
+      const skip = (page - 1) * limit;
+
+      // Build filter
+      const filter: any = {};
+      if (status) {
+        filter.status = status;
+      }
+
+      // Build aggregation pipeline for search
+      const pipeline: any[] = [
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        }
+      ];
+
+      // Add search filter if provided
+      if (search) {
+        pipeline.push({
+          $match: {
+            $or: [
+              { 'user.email': { $regex: search, $options: 'i' } },
+              { 'user.firstName': { $regex: search, $options: 'i' } },
+              { 'user.lastName': { $regex: search, $options: 'i' } },
+              { 'user.walletAddress': { $regex: search, $options: 'i' } },
+              { purpose: { $regex: search, $options: 'i' } }
+            ]
+          }
+        });
+      }
+
+      // Add status filter
+      if (status) {
+        pipeline.push({
+          $match: { status }
+        });
+      }
+
+      // Add sorting, pagination, and projection
+      pipeline.push(
+        { $sort: { requestDate: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $project: {
+            _id: 1,
+            amount: 1,
+            purpose: 1,
+            interestRate: 1,
+            termMonths: 1,
+            status: 1,
+            requestDate: 1,
+            approvalDate: 1,
+            rejectionDate: 1,
+            rejectionReason: 1,
+            collateral: 1,
+            adminNotes: 1,
+            nftTokenId: 1,
+            nftTransactionHash: 1,
+            'user._id': 1,
+            'user.email': 1,
+            'user.firstName': 1,
+            'user.lastName': 1,
+            'user.walletAddress': 1,
+            'user.kyc': 1
+          }
+        }
+      );
+
+      const [loans, totalCount] = await Promise.all([
+        Loan.aggregate(pipeline),
+        Loan.countDocuments(filter)
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          loans,
+          pagination: {
+            currentPage: page,
+            totalPages: Math.ceil(totalCount / limit),
+            totalRequests: totalCount,
+            limit
+          }
+        },
+        message: 'Loan requests retrieved successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * @route   GET /api/loans/admin/requests/:id
+ * @desc    Get detailed loan request for admin review
+ * @access  Private (Admin only)
+ */
+router.get('/admin/requests/:id', 
+  authorize('admin'), 
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const loan = await Loan.findById(req.params.id)
+        .populate({
+          path: 'userId',
+          select: 'firstName lastName email walletAddress kyc phoneNumber dateOfBirth address'
+        })
+        .populate({
+          path: 'approvedBy',
+          select: 'firstName lastName email'
+        });
+
+      if (!loan) {
+        return next(createError('Loan request not found', 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        data: loan,
+        message: 'Loan request details retrieved successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * @route   PUT /api/loans/admin/approve/:id
+ * @desc    Approve a loan request and mint NFT
+ * @access  Private (Admin only)
+ */
+router.put('/admin/approve/:id', 
+  authorize('admin'), 
+  [
+    body('adminNotes').optional().isString().trim().withMessage('Admin notes must be a string'),
+    body('adjustedInterestRate').optional().isFloat({ min: 0.1, max: 50 }).withMessage('Interest rate must be between 0.1% and 50%'),
+    body('adjustedTermMonths').optional().isInt({ min: 1, max: 360 }).withMessage('Term must be between 1 and 360 months')
+  ],
+  handleValidationErrors,
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { adminNotes, adjustedInterestRate, adjustedTermMonths } = req.body;
+      
+      const loan = await Loan.findById(req.params.id)
+        .populate('userId', 'firstName lastName email walletAddress');
+
+      if (!loan) {
+        return next(createError('Loan request not found', 404));
+      }
+
+      if (loan.status !== 'pending') {
+        return next(createError('Only pending loan requests can be approved', 400));
+      }
+
+      // Update loan with approval details
+      loan.status = 'approved';
+      loan.approvalDate = new Date();
+      loan.approvedBy = req.user!._id;
+      if (adminNotes) loan.adminNotes = adminNotes;
+      if (adjustedInterestRate) loan.interestRate = adjustedInterestRate;
+      if (adjustedTermMonths) loan.termMonths = adjustedTermMonths;
+
+      try {
+        // Mint NFT via Verbwire API
+        const nftMetadata = {
+          name: `OrbitLend Loan #${loan._id}`,
+          description: `Loan NFT for ${loan.amount} ETH - ${loan.purpose}`,
+          attributes: [
+            { trait_type: 'Loan Amount', value: loan.amount.toString() },
+            { trait_type: 'Interest Rate', value: `${loan.interestRate}%` },
+            { trait_type: 'Term (Months)', value: loan.termMonths.toString() },
+            { trait_type: 'Purpose', value: loan.purpose },
+            { trait_type: 'Status', value: 'approved' },
+            { trait_type: 'Approval Date', value: loan.approvalDate!.toISOString() }
+          ]
+        };
+
+        const nftResult = await verbwireService().mintLoanNFT(
+          (loan.userId as any).walletAddress,
+          {
+            loanId: loan._id.toString(),
+            amount: loan.amount,
+            interestRate: loan.interestRate,
+            termMonths: loan.termMonths,
+            purpose: loan.purpose,
+            approvalDate: loan.approvalDate!,
+            borrowerName: `${(loan.userId as any).firstName} ${(loan.userId as any).lastName}`
+          }
+        );
+
+        // Update loan with NFT details
+        loan.nftTokenId = nftResult.token_id;
+        loan.nftContractAddress = nftResult.contract_address;
+        loan.nftTransactionHash = nftResult.transaction_hash;
+        loan.status = 'active'; // Change to active after successful NFT minting
+
+        // Create NFT loan record
+        const nftLoan = new NFTLoan({
+          loanId: loan._id,
+          tokenId: nftResult.token_id,
+          contractAddress: nftResult.contract_address,
+          transactionHash: nftResult.transaction_hash,
+          metadata: nftMetadata,
+          isActive: true,
+          marketplaceStatus: 'not_listed'
+        });
+
+        await nftLoan.save();
+
+      } catch (nftError) {
+        console.error('NFT minting failed:', nftError);
+        // Still approve the loan but without NFT
+        loan.adminNotes = (loan.adminNotes || '') + ' | NFT minting failed: ' + (nftError as Error).message;
+      }
+
+      await loan.save();
+
+      // Emit WebSocket notification to user
+      wsService.emitLoanStatusUpdate({
+        loanId: loan._id.toString(),
+        userId: (loan.userId as any)._id.toString(),
+        status: 'approved',
+        amount: loan.amount
+      });
+
+      res.status(200).json({
+        success: true,
+        data: loan,
+        message: 'Loan request approved successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * @route   PUT /api/loans/admin/reject/:id
+ * @desc    Reject a loan request
+ * @access  Private (Admin only)
+ */
+router.put('/admin/reject/:id', 
+  authorize('admin'), 
+  [
+    body('rejectionReason').isString().trim().isLength({ min: 10 }).withMessage('Rejection reason is required (minimum 10 characters)'),
+    body('adminNotes').optional().isString().trim().withMessage('Admin notes must be a string')
+  ],
+  handleValidationErrors,
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { rejectionReason, adminNotes } = req.body;
+      
+      const loan = await Loan.findById(req.params.id)
+        .populate('userId', 'firstName lastName email');
+
+      if (!loan) {
+        return next(createError('Loan request not found', 404));
+      }
+
+      if (loan.status !== 'pending') {
+        return next(createError('Only pending loan requests can be rejected', 400));
+      }
+
+      // Update loan with rejection details
+      loan.status = 'rejected';
+      loan.rejectionDate = new Date();
+      loan.rejectionReason = rejectionReason;
+      loan.approvedBy = req.user!._id;
+      if (adminNotes) loan.adminNotes = adminNotes;
+
+      await loan.save();
+
+      // Emit WebSocket notification to user
+      wsService.emitLoanStatusUpdate({
+        loanId: loan._id.toString(),
+        userId: (loan.userId as any)._id.toString(),
+        status: 'rejected',
+        amount: loan.amount,
+        rejectionReason: rejectionReason
+      });
+
+      res.status(200).json({
+        success: true,
+        data: loan,
+        message: 'Loan request rejected successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * @route   GET /api/loans/admin/stats
+ * @desc    Get loan statistics for admin dashboard
+ * @access  Private (Admin only)
+ */
+router.get('/admin/stats', 
+  authorize('admin'), 
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const stats = await Loan.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+            totalAmount: { $sum: '$amount' }
+          }
+        }
+      ]);
+
+      const totalRequests = await Loan.countDocuments();
+      const recentRequests = await Loan.find()
+        .sort({ requestDate: -1 })
+        .limit(5)
+        .populate('userId', 'firstName lastName email walletAddress kycStatus');
+
+      const formattedStats = {
+        totalRequests,
+        byStatus: stats.reduce((acc: any, stat: any) => {
+          acc[stat._id] = {
+            count: stat.count,
+            totalAmount: stat.totalAmount
+          };
+          return acc;
+        }, {}),
+        recentRequests
+      };
+
+      res.status(200).json({
+        success: true,
+        data: formattedStats,
+        message: 'Loan statistics retrieved successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;

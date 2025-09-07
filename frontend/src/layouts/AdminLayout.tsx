@@ -7,21 +7,22 @@ import {
   PieChart,
   Shield,
   Users,
-  Bell,
   Settings,
   Menu,
   X,
   ChevronDown,
   LogOut,
-  Plus
+  Plus,
+  User
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import AdminNotifications from '../components/admin/AdminNotifications'
 
 const AdminLayout = () => {
   const location = useLocation()
   const { user, logout } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [notificationCount] = useState(3) // This would come from a real notification system
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   const navigation = [
     {
@@ -38,11 +39,11 @@ const AdminLayout = () => {
       description: 'Manage all loan requests'
     },
     {
-      name: 'Request Loan',
+      name: 'Loan Requests',
       href: '/admin/request-loan',
       icon: Plus,
       current: location.pathname === '/admin/request-loan',
-      description: 'Create system loans'
+      description: 'Review & manage loan applications'
     },
     {
       name: 'Marketplace',
@@ -205,15 +206,8 @@ const AdminLayout = () => {
             <div className="flex-1" />
             
             <div className="ml-4 flex items-center space-x-4">
-              {/* Notifications */}
-              <button className="p-2 text-gray-400 hover:text-gray-500 relative">
-                <Bell className="h-6 w-6" />
-                {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                    {notificationCount}
-                  </span>
-                )}
-              </button>
+              {/* Real-time Notifications */}
+              <AdminNotifications />
 
               {/* Settings */}
               <button className="p-2 text-gray-400 hover:text-gray-500">
@@ -222,7 +216,10 @@ const AdminLayout = () => {
 
               {/* User menu */}
               <div className="relative">
-                <button className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <button 
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
                   <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center mr-2">
                     <span className="text-sm font-medium text-white">
                       {user?.email?.charAt(0).toUpperCase()}
@@ -232,16 +229,31 @@ const AdminLayout = () => {
                   <ChevronDown className="h-4 w-4 text-gray-400" />
                 </button>
                 
-                {/* Dropdown menu would go here */}
-                <div className="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg">
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
-                  </button>
-                </div>
+                {/* Dropdown menu */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                    <div className="py-1">
+                      <Link
+                        to="/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 hover:text-blue-800 transition-colors rounded-md mx-2"
+                      >
+                        <User className="mr-2 h-4 w-4 text-blue-600" />
+                        Profile Settings
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false)
+                          handleLogout()
+                        }}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

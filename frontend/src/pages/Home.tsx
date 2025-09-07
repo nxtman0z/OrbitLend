@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight, Shield, Zap, Globe, TrendingUp, Star, Check, PlayCircle } from 'lucide-react'
+import ContactForm from '../components/ContactForm'
+import FAQSection from '../components/FAQSection'
 
 const Home = () => {
   return (
@@ -324,6 +326,34 @@ const Home = () => {
               </div>
               <div className="text-gray-600 font-medium">Approval Rate</div>
               <div className="text-sm text-green-600 font-medium mt-1">Industry leading</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <FAQSection />
+
+      {/* Contact Support Section */}
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div className="container-responsive">
+          <div className="text-center mb-16 animate-fadeInUp">
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
+              <Globe className="w-4 h-4" />
+              Customer Support
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+              Need Help? We're Here for You
+            </h2>
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Our dedicated support team is ready to assist you with any questions about OrbitLend, 
+              from loan applications to NFT management. Get expert help when you need it.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <div id="contact-form">
+              <ContactForm />
             </div>
           </div>
         </div>

@@ -42,6 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
     { name: 'Marketplace', href: '/marketplace', icon: ShoppingCart },
     { name: 'Portfolio', href: '/portfolio', icon: Briefcase },
     { name: 'KYC Verification', href: '/kyc', icon: Shield },
+    { name: 'Profile Settings', href: '/profile', icon: User },
   ]
 
   const adminNavItems = [
@@ -88,12 +89,15 @@ const Layout = ({ children }: LayoutProps) => {
               <div className="hidden md:flex items-center space-x-1">
                 {navItems.map((item) => {
                   const Icon = item.icon
+                  const isProfileSettings = item.href === '/profile'
                   return (
                     <Link
                       key={item.href}
                       to={item.href}
-                      className={`nav-item-premium ${
-                        isActiveRoute(item.href) ? 'active' : ''
+                      className={`${
+                        isProfileSettings 
+                          ? 'nav-item-profile' 
+                          : `nav-item-premium ${isActiveRoute(item.href) ? 'active' : ''}`
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -144,14 +148,11 @@ const Layout = ({ children }: LayoutProps) => {
                     </div>
                     <Link
                       to="/profile"
-                      className="p-2.5 rounded-lg transition-all duration-300 hover:scale-110"
-                      style={{ 
-                        color: `rgb(var(--text-muted))`,
-                        background: `rgb(var(--bg-card))`,
-                        border: `1px solid rgb(var(--border-primary))`
-                      }}
+                      className="flex items-center space-x-2 p-2.5 rounded-lg transition-all duration-300 hover:scale-105 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-md hover:shadow-lg"
+                      title="Profile Settings"
                     >
                       <User className="w-5 h-5" />
+                      <span className="text-sm font-medium">Profile</span>
                     </Link>
                     <button
                       onClick={handleLogout}
@@ -206,13 +207,16 @@ const Layout = ({ children }: LayoutProps) => {
             <div className="px-4 pt-4 pb-6 space-y-2">
               {navItems.map((item) => {
                 const Icon = item.icon
+                const isProfileSettings = item.href === '/profile'
                 return (
                   <Link
                     key={item.href}
                     to={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`nav-item-premium ${
-                      isActiveRoute(item.href) ? 'active' : ''
+                    className={`${
+                      isProfileSettings 
+                        ? 'nav-item-profile' 
+                        : `nav-item-premium ${isActiveRoute(item.href) ? 'active' : ''}`
                     }`}
                   >
                     <Icon className="w-5 h-5" />

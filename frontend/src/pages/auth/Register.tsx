@@ -176,7 +176,7 @@ const Register = () => {
                     <input
                       {...register('firstName')}
                       type="text"
-                      className="input-field pl-10"
+                      className="input-field pl-16"
                       placeholder="John"
                     />
                   </div>
@@ -196,7 +196,7 @@ const Register = () => {
                     <input
                       {...register('lastName')}
                       type="text"
-                      className="input-field pl-10"
+                      className="input-field pl-16"
                       placeholder="Doe"
                     />
                   </div>
@@ -217,7 +217,7 @@ const Register = () => {
                   <input
                     {...register('email')}
                     type="email"
-                    className="input-field pl-10"
+                    className="input-field pl-16"
                     placeholder="john.doe@example.com"
                   />
                 </div>
@@ -237,7 +237,7 @@ const Register = () => {
                   <input
                     {...register('phone')}
                     type="tel"
-                    className="input-field pl-10"
+                    className="input-field pl-16"
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
@@ -323,7 +323,7 @@ const Register = () => {
                   <input
                     {...register('walletAddress')}
                     type="text"
-                    className="input-field pl-10"
+                    className="input-field pl-16"
                     placeholder="0x742d35Cc6Ab4925b9F32465a919e95fDf..."
                   />
                 </div>
@@ -351,7 +351,7 @@ const Register = () => {
                   <input
                     {...register('password')}
                     type={showPassword ? 'text' : 'password'}
-                    className="input-field pl-10 pr-10"
+                    className="input-field pl-16 pr-16"
                     placeholder="Create a strong password"
                   />
                   <button
@@ -382,7 +382,7 @@ const Register = () => {
                   <input
                     {...register('confirmPassword')}
                     type={showConfirmPassword ? 'text' : 'password'}
-                    className="input-field pl-10 pr-10"
+                    className="input-field pl-16 pr-16"
                     placeholder="Confirm your password"
                   />
                   <button

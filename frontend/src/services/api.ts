@@ -23,7 +23,7 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || '/api',
+      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json'
@@ -90,8 +90,25 @@ class ApiService {
   }
 
   // User endpoints
+  async getProfile(): Promise<ApiResponse<User>> {
+    const response: AxiosResponse<ApiResponse<User>> = await this.api.get('/users/profile')
+    return response.data
+  }
+
   async updateProfile(data: ProfileUpdateData): Promise<ApiResponse<User>> {
     const response: AxiosResponse<ApiResponse<User>> = await this.api.put('/users/profile', data)
+    return response.data
+  }
+
+  async uploadProfilePicture(file: File): Promise<ApiResponse<{ profilePicture: string }>> {
+    const formData = new FormData()
+    formData.append('profilePicture', file)
+    
+    const response: AxiosResponse<ApiResponse<{ profilePicture: string }>> = await this.api.post('/users/profile/upload-picture', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
     return response.data
   }
 
@@ -195,6 +212,38 @@ class ApiService {
   }
 
   // Admin endpoints
+  async getAdminStats(): Promise<ApiResponse<any>> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.api.get('/loans/admin/stats')
+    return response.data
+  }
+
+  async getAdminLoanRequests(filters: any = {}): Promise<any> {
+    const params = new URLSearchParams()
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.append(key, value.toString())
+      }
+    })
+    
+    const response: AxiosResponse<any> = await this.api.get(`/loans/admin/requests?${params}`)
+    return response.data
+  }
+
+  async getLoanRequestDetails(loanId: string): Promise<ApiResponse<any>> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.api.get(`/loans/admin/requests/${loanId}`)
+    return response.data
+  }
+
+  async approveLoanRequest(loanId: string, data: any): Promise<ApiResponse<any>> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.api.put(`/loans/admin/approve/${loanId}`, data)
+    return response.data
+  }
+
+  async rejectLoanRequest(loanId: string, data: any): Promise<ApiResponse<any>> {
+    const response: AxiosResponse<ApiResponse<any>> = await this.api.put(`/loans/admin/reject/${loanId}`, data)
+    return response.data
+  }
+
   async getAdminDashboard(): Promise<ApiResponse<AdminStats>> {
     const response: AxiosResponse<ApiResponse<AdminStats>> = await this.api.get('/admin/dashboard')
     return response.data
@@ -276,6 +325,23 @@ class ApiService {
   async simpleAuthRegister(data: RegisterRequest): Promise<{ user: User }> {
     const response: AxiosResponse<{ user: User }> = await this.api.post('/simple-auth/signup', data)
     return response.data
+  }
+
+  // Chatbot endpoints
+  async sendChatMessage(message: string): Promise<{ message: string; timestamp: string }> {
+    const response: AxiosResponse<{ data: { message: string; timestamp: string } }> = await this.api.post('/chatbot/message', {
+      message
+    })
+    return response.data.data
+  }
+
+  async getChatHistory(): Promise<any[]> {
+    const response: AxiosResponse<{ data: { messages: any[] } }> = await this.api.get('/chatbot/history')
+    return response.data.data.messages
+  }
+
+  async clearChatHistory(): Promise<void> {
+    await this.api.delete('/chatbot/clear')
   }
 
   // Utility methods

@@ -13,12 +13,13 @@ import Home from './pages/Home'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Dashboard from './pages/Dashboard'
+import LoansPage from './pages/LoansPage'
 import LoanRequest from './pages/loans/LoanRequest'
 import LoanDetails from './pages/loans/LoanDetails'
 import MyLoans from './pages/loans/MyLoans'
 import KYCVerification from './pages/kyc/KYCVerification'
 import NFTTransfer from './pages/nft/NFTTransfer'
-import Profile from './pages/Profile'
+import { ProfilePage } from './pages/ProfilePage'
 import Marketplace from './pages/marketplace/Marketplace'
 import NFTDetails from './pages/marketplace/NFTDetails'
 import Portfolio from './pages/portfolio/Portfolio'
@@ -30,7 +31,7 @@ import WebSocketTest from './pages/test/WebSocketTest'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminOverview from './pages/admin/AdminOverview'
 import AdminLoans from './pages/admin/AdminLoans'
-import AdminRequestLoan from './pages/admin/AdminRequestLoan'
+import AdminRequestLoanSimple from './pages/admin/AdminRequestLoanSimple'
 import AdminMarketplace from './pages/admin/AdminMarketplace'
 import AdminUsers from './pages/admin/AdminUsers'
 
@@ -106,7 +107,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Profile />
+                  <ProfilePage />
                 </Layout>
               </ProtectedRoute>
             }
@@ -129,6 +130,17 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <NFTTransfer />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/loans"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <LoansPage />
                 </Layout>
               </ProtectedRoute>
             }
@@ -244,7 +256,7 @@ function App() {
             path="/admin/request"
             element={
               <AdminRoute>
-                <AdminRequestLoan />
+                <AdminRequestLoanSimple />
               </AdminRoute>
             }
           />

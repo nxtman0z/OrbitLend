@@ -518,6 +518,46 @@ body {
   left: 100%;
 }
 
+/* Input field styles */
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  color: #111827;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: all 0.2s ease-in-out;
+}
+
+.input-field::placeholder {
+  color: #9ca3af;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6, 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Dark theme input styles */
+[data-theme="dark"] .input-field {
+  background-color: #1f2937;
+  border-color: #4b5563;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .input-field::placeholder {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .input-field:focus {
+  background-color: #374151;
+  box-shadow: 0 0 0 2px #60a5fa, 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
 .btn-premium:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-xl);
@@ -559,6 +599,23 @@ body {
   font-size: 1rem;
   transition: all 0.3s ease;
   outline: none;
+}
+
+/* Override padding for inputs with icons */
+.input-premium.pl-16 {
+  padding-left: 4rem !important;
+}
+
+.input-premium.pr-16 {
+  padding-right: 4rem !important;
+}
+
+.input-field.pl-16 {
+  padding-left: 4rem !important;
+}
+
+.input-field.pr-16 {
+  padding-right: 4rem !important;
 }
 
 .input-premium:focus {
@@ -649,6 +706,32 @@ body {
   height: 50%;
   background: rgb(var(--color-primary));
   border-radius: 2px;
+}
+
+/* Profile Settings Navigation Item */
+.nav-item-profile {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.2);
+}
+
+.nav-item-profile:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 15px -3px rgba(139, 92, 246, 0.3);
+  color: white;
+}
+
+.nav-item-profile span {
+  margin-left: 0.5rem;
 }
 
 /* Premium Dark Mode Toggle */

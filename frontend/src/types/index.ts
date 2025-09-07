@@ -6,7 +6,9 @@ export interface User {
   lastName: string
   role: 'user' | 'admin'
   phone?: string
-  address?: {
+  phoneNumber?: string
+  profilePicture?: string
+  address?: string | {
     street: string
     city: string
     state: string
@@ -14,6 +16,15 @@ export interface User {
     country: string
   }
   kycStatus: 'pending' | 'approved' | 'rejected'
+  kyc?: {
+    status: 'pending' | 'approved' | 'rejected'
+    documents?: {
+      idDocument?: string
+      proofOfAddress?: string
+      proofOfIncome?: string
+      uploadDate: string
+    }
+  }
   kycDocuments?: {
     idDocument?: string
     proofOfAddress?: string
@@ -218,7 +229,9 @@ export interface ProfileUpdateData {
   firstName?: string
   lastName?: string
   phone?: string
-  address?: {
+  phoneNumber?: string
+  profilePicture?: string
+  address?: string | {
     street: string
     city: string
     state: string

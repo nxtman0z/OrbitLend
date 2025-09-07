@@ -1,10 +1,46 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import User from '../models/User';
 import { createError } from '../middleware/errorHandler';
 import { AuthRequest, authenticate, authorize } from '../middleware/auth';
 
 const router = express.Router();
+
+// Configure multer for profile picture uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../uploads/profile-pictures');
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req: AuthRequest, file, cb) => {
+    // Generate unique filename
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const extension = path.extname(file.originalname);
+    cb(null, `profile-${req.user?._id}-${uniqueSuffix}${extension}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Check file type
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
 // Apply authentication to all routes
 router.use(authenticate);
@@ -275,5 +311,58 @@ router.delete('/account', async (req: AuthRequest, res: Response, next: NextFunc
     next(error);
   }
 });
+
+/**
+ * @route   POST /api/users/profile/upload-picture
+ * @desc    Upload profile picture
+ * @access  Private
+ */
+router.post('/profile/upload-picture', 
+  upload.single('profilePicture'),
+  async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!req.user) {
+        return next(createError('Authentication required', 401));
+      }
+
+      if (!req.file) {
+        return next(createError('No file uploaded', 400));
+      }
+
+      // Generate URL for the uploaded file
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? process.env.BASE_URL || 'https://yourdomain.com'
+        : `http://localhost:${process.env.PORT || 5000}`;
+      const profilePictureUrl = `${baseUrl}/uploads/profile-pictures/${req.file.filename}`;
+
+      // Update user profile with new picture URL
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { profilePicture: profilePictureUrl },
+        { new: true }
+      );
+
+      if (!user) {
+        return next(createError('User not found', 404));
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          profilePicture: profilePictureUrl
+        },
+        message: 'Profile picture uploaded successfully'
+      });
+    } catch (error) {
+      // Clean up uploaded file if there's an error
+      if (req.file) {
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.error('Error deleting file:', err);
+        });
+      }
+      next(error);
+    }
+  }
+);
 
 export default router;

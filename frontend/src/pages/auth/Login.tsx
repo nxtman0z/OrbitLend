@@ -162,7 +162,7 @@ const Login: React.FC = () => {
                 <input
                   {...register('email')}
                   type="email"
-                  className="input-premium pl-10"
+                  className="input-premium pl-16"
                   placeholder="Enter your email"
                 />
               </div>
@@ -183,7 +183,7 @@ const Login: React.FC = () => {
                 <input
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
-                  className="input-premium pl-10 pr-12"
+                  className="input-premium pl-16 pr-16"
                   placeholder="Enter your password"
                 />
                 <button
