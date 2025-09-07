@@ -293,7 +293,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For support and questions:
 - Create an issue in the GitHub repository
-- Contact the development team
+- Contact the development team 
 - Check the documentation in the `/docs` folder
 
 ## 🚀 Future Enhancements
@@ -307,4 +307,4 @@ For support and questions:
 
 --
 
-**OrbitLend** - Revolutionizing fintech through blockchain technology! 🚀
+**OrbitLend** - Revolutionizing fintech through blockchain technology! 
