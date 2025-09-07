@@ -212,170 +212,6 @@ function App() {
             }
           />
 
-          {/* Admin routes with nested structure */}
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            }
-          >
-            {/* Nested admin routes */}
-            <Route index element={<AdminOverview />} />
-            <Route path="loans" element={<AdminLoans />} />
-            <Route path="request" element={<AdminRequestLoan />} />
-            <Route path="marketplace" element={<AdminMarketplace />} />
-            <Route path="users" element={<AdminUsers />} />
-          </Route>
-
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        
-        {/* Toast notifications */}
-          return (
-    <ThemeProvider>
-      <div className="App">
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Home />} />
-          <Route
-            path="/login"
-            element={
-              isAuthenticated ? (
-                <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
-              ) : (
-                <Layout>
-                  <Login />
-                </Layout>
-              )
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              isAuthenticated ? (
-                <Navigate to={user?.role === 'admin' ? '/admin' : '/dashboard'} replace />
-              ) : (
-                <Layout>
-                  <Register />
-                </Layout>
-              )
-            }
-          />
-
-          {/* Protected user routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Profile />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/kyc"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <KYCVerification />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/nft-transfer"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <NFTTransfer />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/loans/request"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <LoanRequest />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/loans/my-loans"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <MyLoans />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/loans/:id"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <LoanDetails />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/marketplace"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Marketplace />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/marketplace/nft/:id"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <NFTDetails />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/portfolio"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Portfolio />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
           {/* Admin routes */}
           <Route
             path="/admin"
@@ -405,7 +241,7 @@ function App() {
           />
 
           <Route
-            path="/admin/loans/request"
+            path="/admin/request"
             element={
               <AdminRoute>
                 <AdminRequestLoan />
@@ -431,22 +267,11 @@ function App() {
             }
           />
 
-          {/* Test routes */}
-          <Route
-            path="/test/websocket"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <WebSocketTest />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catch all */}
+          {/* Catch all route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
+        
+        {/* Toast notifications */}
         <Toaster
           position="top-right"
           toastOptions={{
@@ -476,9 +301,6 @@ function App() {
             },
           }}
         />
-      </div>
-    </ThemeProvider>
-  )
       </div>
     </ThemeProvider>
   )
