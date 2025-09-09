@@ -1,4 +1,9 @@
-# OrbitLend - Fintech Blockchain Platform
+# 🌌 OrbitLend - Fintech Blockchain Platform
+<p align="center">
+  <a href="https://orbitlend8.vercel.app/">
+    <img src="https://img.shields.io/badge/🚀 Live Demo-007bff?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+</p>
 
 OrbitLend is a comprehensive fintech blockchain platform that enables users to request loans, tokenize loans as NFTs, and trade them on a marketplace. The platform integrates with Verbwire API for NFT operations and uses MongoDB for data persistence.
 
